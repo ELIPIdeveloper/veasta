@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>گزارش پرستاری سیستم به سیستم</title>
+
+<!-- فاویکون -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/favicon.ico">
+
+<!-- متادیتای اشتراک‌گذاری / Open Graph -->
+<meta property="og:title" content="گزارش پرستاری سیستم به سیستم">
+<meta property="og:description" content="ابزار هوشمند تدوین گزارش تحویل شیفت پرستاری بر اساس ارزیابی سیستم‌به‌سیستم بیمار">
+<meta property="og:image" content="/og.webp">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="گزارش پرستاری سیستم به سیستم">
+<meta name="twitter:image" content="/og.webp">
+<meta name="theme-color" content="#146B63">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- کتابخانه تولید PDF -->
+<style>
+  :root{
+    --bg:#F5F5F7;
+    --surface:#FFFFFF;
+    --surface-alt:#FBFBFC;
+    --border:#E2E2E6;
+    --border-soft:#ECECEF;
+    --text:#1C1C1E;
+    --text-soft:#6E6E73;
+    --text-faint:#9A9AA0;
+    --accent:#146B63;
+    --accent-dark:#0D4F49;
+    --accent-soft:#E4F2EF;
+    --warn:#B8842E;
+    --warn-soft:#FBF3E2;
+    --danger:#9C3D42;
+    --danger-soft:#F8E9EA;
+    --radius-lg:18px;
+    --radius-md:12px;
+    --radius-sm:8px;
+    --shadow:0 1px 2px rgba(20,20,22,.04), 0 8px 24px -12px rgba(20,20,22,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Vazirmatn', sans-serif;
+    min-height:100vh;
+    line-height:1.75;
+  }
+  .app{ max-width:1180px; margin:0 auto; padding:28px 20px 60px; }
+  .app-header{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{ width:42px;height:42px; border-radius:12px; background:linear-gradient(155deg, var(--accent), var(--accent-dark)); display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; flex-shrink:0; }
+  .brand-text h1{ font-size:17px; font-weight:700; margin:0; letter-spacing:-.01em; }
+  .brand-text p{ margin:2px 0 0; font-size:12.5px; color:var(--text-soft); }
+  .header-meta{ font-size:12.5px; color:var(--text-faint); background:var(--surface); border:1px solid var(--border-soft); padding:7px 13px; border-radius:999px; }
+
+  .layout{ display:grid; grid-template-columns:250px 1fr; gap:22px; align-items:start; }
+  @media (max-width:880px){ .layout{grid-template-columns:1fr;} .sidebar{display:none;} }
+
+  .sidebar{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:10px; position:sticky; top:20px; }
+  .step-item{ display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:var(--radius-md); cursor:pointer; transition:background .15s ease; position:relative; }
+  .step-item:hover{background:var(--surface-alt);}
+  .step-item.active{background:var(--accent-soft);}
+  .step-num{ width:26px;height:26px; border-radius:50%; background:var(--surface-alt); border:1px solid var(--border); color:var(--text-soft); display:flex;align-items:center;justify-content:center; font-size:12px;font-weight:700; flex-shrink:0; transition:all .15s ease; }
+  .step-item.active .step-num{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .step-item.done .step-num{ background:var(--accent-dark); border-color:var(--accent-dark); color:#fff; }
+  .step-label{ font-size:13.5px; font-weight:500; color:var(--text); }
+  .step-item.active .step-label{font-weight:700;color:var(--accent-dark);}
+
+  .mobile-progress{ display:none; background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:14px 16px; margin-bottom:16px; }
+  @media (max-width:880px){ .mobile-progress{display:block;} }
+  .mobile-progress-top{ display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px; }
+  .mobile-progress-top span:first-child{font-weight:700;font-size:13.5px;}
+  .mobile-progress-top span:last-child{font-size:12px;color:var(--text-faint);}
+  .progress-track{ height:5px;background:var(--border-soft);border-radius:99px;overflow:hidden; }
+  .progress-fill{ height:100%;background:var(--accent);border-radius:99px; transition:width .25s ease; }
+
+  .panel{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); box-shadow:var(--shadow); padding:26px 26px 22px; min-height:420px; display:flex; flex-direction:column; }
+  @media (max-width:600px){ .panel{padding:20px 16px 18px;} }
+
+  .panel-head{margin-bottom:6px;}
+  .panel-head .eyebrow{ font-size:12px;color:var(--accent-dark);font-weight:600;margin:0 0 4px; }
+  .panel-head h2{ margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.01em; }
+  .panel-head p{margin:0 0 18px;font-size:13px;color:var(--text-soft);}
+
+  .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 18px; }
+  @media (max-width:600px){ .field-grid{grid-template-columns:1fr;} }
+  .field{display:flex;flex-direction:column;gap:7px;}
+  .field.span-2{grid-column:1/-1;}
+  .field label{ font-size:12.8px;font-weight:600;color:var(--text-soft); display:flex;align-items:center;justify-content:space-between;gap:6px; }
+  .field label .val-badge{ background:var(--accent-soft); color:var(--accent-dark); font-weight:700; font-size:12px; padding:2px 9px; border-radius:999px; }
+
+  input[type=text], select, textarea{
+    font-family:inherit; border:1px solid var(--border); background:var(--surface-alt);
+    border-radius:var(--radius-sm); padding:10px 12px; font-size:13.8px; color:var(--text);
+    width:100%; transition:border-color .15s ease, background .15s ease;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--accent); background:#fff; }
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%236E6E73'/></svg>");background-repeat:no-repeat;background-position:left 12px center;padding-left:28px;}
+
+  /* Slider */
+  .slider-wrap{ display:flex; align-items:center; gap:10px; background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; }
+  input[type=range]{ flex:1; appearance:none; height:5px; border-radius:99px; background:var(--border); outline:none; direction:ltr; }
+  input[type=range]::-webkit-slider-thumb{ appearance:none; width:18px;height:18px;border-radius:50%; background:var(--accent); border:3px solid #fff; box-shadow:0 0 0 1px var(--accent); cursor:pointer; }
+  input[type=range]::-moz-range-thumb{ width:18px;height:18px;border-radius:50%; background:var(--accent); border:3px solid #fff; box-shadow:0 0 0 1px var(--accent); cursor:pointer; }
+  .slider-minmax{ font-size:10.5px; color:var(--text-faint); display:flex; justify-content:space-between; direction:ltr; padding:0 2px; }
+
+  .check-row{ display:flex;align-items:center;gap:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; cursor:pointer; font-size:13.5px; font-weight:500; justify-content:space-between; }
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+
+  .chip-group{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{ border:1px solid var(--border); background:var(--surface-alt); padding:7px 13px; border-radius:999px; font-size:12.8px; cursor:pointer; font-weight:500; color:var(--text-soft); transition:all .15s ease; }
+  .chip.selected{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .other-input{ margin-top:2px; }
+
+  .nav-row{ display:flex;justify-content:space-between;align-items:center; margin-top:24px;padding-top:18px;border-top:1px solid var(--border-soft); gap:10px; }
+  .btn{ font-family:inherit; border:none; border-radius:999px; padding:11px 22px; font-size:13.8px; font-weight:700; cursor:pointer; transition:opacity .15s ease, transform .1s ease; }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:transparent;color:var(--text-soft);border:1px solid var(--border);}
+  .btn-ghost:hover{background:var(--surface-alt);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .review-list{display:flex;flex-direction:column;gap:10px;}
+  .review-card{ border:1px solid var(--border-soft); border-radius:var(--radius-md); padding:13px 15px; background:var(--surface-alt); cursor:pointer; }
+  .review-card:hover{border-color:var(--accent);}
+  .review-card-top{display:flex;justify-content:space-between;align-items:center;}
+  .review-card-top strong{font-size:13.5px;}
+  .review-card-top span{font-size:11.5px;color:var(--accent-dark);font-weight:600;}
+  .review-card p{margin:6px 0 0;font-size:12.3px;color:var(--text-soft);line-height:1.6;}
+  .review-empty{color:var(--text-faint);font-style:normal;}
+
+  .generate-box{ margin-top:6px; background:linear-gradient(160deg, var(--accent-soft), #fff); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:22px; text-align:center; }
+  .generate-box h3{margin:0 0 6px;font-size:16px;font-weight:800;}
+  .generate-box p{margin:0 0 16px;font-size:13px;color:var(--text-soft);}
+
+  .report-toolbar{ display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px; }
+  .report-text{ white-space:pre-wrap; font-size:14.5px; line-height:2; border:1px solid var(--border-soft); background:var(--surface-alt); border-radius:var(--radius-md); padding:20px; min-height:260px; font-family:inherit; }
+  .report-text[contenteditable="true"]{background:#fff;border-color:var(--accent);}
+
+  .loading-wrap{ display:flex;flex-direction:column;align-items:center;justify-content:center; gap:14px;padding:60px 20px;flex:1; }
+  .spinner{ width:34px;height:34px;border-radius:50%; border:3px solid var(--border-soft); border-top-color:var(--accent); animation:spin 0.8s linear infinite; }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-wrap p{font-size:13.5px;color:var(--text-soft);margin:0;}
+
+  .error-box{ background:var(--danger-soft); color:var(--danger); border:1px solid #ecc7c9; border-radius:var(--radius-md); padding:14px 16px; font-size:13px; margin-top:14px; }
+  .badge-note{ font-size:11.5px;color:var(--text-faint); background:var(--surface-alt);border:1px solid var(--border-soft); border-radius:var(--radius-sm);padding:9px 12px;margin-top:16px; }
+
+  /* ---------------------------------------------------------
+     قالب خروجی PDF — تم بیمارستانی
+  --------------------------------------------------------- */
+  #pdfTemplate{
+    display:none;
+    background:#fff; direction:rtl; font-family:'Vazirmatn', sans-serif;
+    color:#1C1C1E;
+  }
+  .pdf-page{ width:100%; position:relative; padding:0 0 40px; box-sizing:border-box; overflow:hidden; }
+
+  /* ---------------------------------------------------------
+     حالت چاپ / خروجی PDF — با استفاده از چاپ بومی مرورگر
+     (بسیار پایدارتر از canvas-capture و بدون مشکل فونت/تصویر)
+  --------------------------------------------------------- */
+  @media print{
+    @page{ size:A4; margin:0; }
+    html, body{ background:#fff !important; }
+    body *{ visibility:hidden; }
+    .app, .app *{ display:none !important; }
+    #pdfTemplate, #pdfTemplate *{ visibility:visible; }
+    #pdfTemplate{ display:block !important; position:absolute; top:0; left:0; width:100%; margin:0; }
+    .pdf-page{ width:100%; min-height:100vh; }
+  }
+  .pdf-watermark{ position:absolute; inset:0; z-index:0; opacity:.05; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 85% 8%, #146B63 0 3px, transparent 4px),
+      radial-gradient(circle at 8% 92%, #146B63 0 3px, transparent 4px);
+    background-size:26px 26px;
+  }
+  .pdf-cross-bg{ position:absolute; left:-60px; bottom:-60px; width:280px; height:280px; opacity:.05; z-index:0;
+    background: radial-gradient(circle, #146B63 0 0);
+  }
+  .pdf-header{ position:relative; z-index:1; background:linear-gradient(120deg, #0D4F49, #146B63 55%, #1B8377);
+    padding:34px 44px 26px; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+  .pdf-header::after{ content:''; position:absolute; left:0;right:0;bottom:0; height:6px;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 22px, transparent 22px 30px); }
+  .pdf-header-brand{ display:flex; align-items:center; gap:14px; }
+  .pdf-logo{ width:56px; height:56px; border-radius:14px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; padding:8px; flex-shrink:0; border:1px solid rgba(255,255,255,.35); }
+  .pdf-logo img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .pdf-header-text h1{ margin:0; font-size:19px; font-weight:800; letter-spacing:-.01em; }
+  .pdf-header-text p{ margin:4px 0 0; font-size:11.5px; color:rgba(255,255,255,.82); }
+  .pdf-header-badge{ background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:8px 16px; font-size:11px; text-align:center; line-height:1.6; }
+  .pdf-header-badge b{ display:block; font-size:12.5px; }
+
+  .pdf-meta{ position:relative; z-index:1; margin:-16px 44px 0; background:#fff; border:1px solid var(--border-soft); border-radius:16px;
+    box-shadow:0 10px 30px -14px rgba(13,79,73,.35); display:grid; grid-template-columns:repeat(3,1fr); }
+  .pdf-meta-item{ padding:14px 16px; border-left:1px solid var(--border-soft); }
+  .pdf-meta-item:last-child{border-left:none;}
+  .pdf-meta-item span{ display:block; font-size:10.5px; color:var(--text-faint); font-weight:600; margin-bottom:3px; }
+  .pdf-meta-item strong{ font-size:13.5px; color:var(--accent-dark); font-weight:700; }
+
+  .pdf-body{ position:relative; z-index:1; padding:30px 44px 10px; }
+  .pdf-body-title{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .pdf-body-title .bar{ width:5px; height:20px; border-radius:4px; background:var(--accent); }
+  .pdf-body-title h2{ margin:0; font-size:15px; font-weight:800; color:var(--accent-dark); }
+  .pdf-report-text{ font-size:12.8px; line-height:2.1; white-space:pre-wrap; color:#28282c; text-align:justify; }
+
+  .pdf-footer{ position:relative; z-index:1; margin:28px 44px 0; padding-top:22px; border-top:1.5px dashed var(--border); }
+  .pdf-sign-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .pdf-sign-box{ border:1.4px solid var(--border); border-radius:14px; padding:16px 18px; text-align:center; background:var(--surface-alt); min-height:118px; display:flex; flex-direction:column; justify-content:space-between; }
+  .pdf-sign-box .lbl{ font-size:11.5px; font-weight:700; color:var(--accent-dark); margin-bottom:8px; }
+  .pdf-sign-box .line{ border-bottom:1.2px solid var(--text-faint); height:44px; }
+  .pdf-sign-box .sub{ font-size:9.5px; color:var(--text-faint); margin-top:8px; }
+  .pdf-stamp-circle{ width:78px; height:78px; border-radius:50%; border:2px dashed var(--accent); margin:2px auto 8px; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--accent); opacity:.75; }
+
+  .pdf-bottombar{ position:relative; z-index:1; margin-top:26px; padding:14px 44px; background:var(--surface-alt); border-top:1px solid var(--border-soft);
+    display:flex; justify-content:space-between; align-items:center; font-size:9.5px; color:var(--text-faint); }
+  .pdf-bottombar .tag{ background:var(--accent-soft); color:var(--accent-dark); font-weight:700; padding:3px 10px; border-radius:999px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark"><img src="/am.webp" alt="لوگو" onerror="this.parentElement.textContent='پ'" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+      <div class="brand-text">
+        <h1>گزارش پرستاری سیستم‌به‌سیستم</h1>
+        <p>بخش بستری عمومی — بر اساس استاندارد ثبت گزارش پرستاری</p>
+      </div>
+    </div>
+    <div class="header-meta" id="headerMeta">مرحله ۱ از ۱۰</div>
+  </div>
+
+  <div class="mobile-progress">
+    <div class="mobile-progress-top">
+      <span id="mobileStepTitle">اطلاعات بیمار</span>
+      <span id="mobileStepCount">۱ / ۱۰</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<!-- قالب مخفی خروجی PDF — تم بیمارستانی -->
+<div id="pdfTemplate">
+  <div class="pdf-page">
+    <div class="pdf-watermark"></div>
+    <div class="pdf-cross-bg"></div>
+
+    <div class="pdf-header">
+      <div class="pdf-header-brand">
+        <div class="pdf-logo"><img src="/am.webp" alt="لوگو" onerror="this.parentElement.innerHTML='پ'"></div>
+        <div class="pdf-header-text">
+          <h1>گزارش پرستاری سیستم‌به‌سیستم</h1>
+          <p>بخش بستری عمومی — گزارش تحویل شیفت</p>
+        </div>
+      </div>
+      <div class="pdf-header-badge">
+        <b id="pdfDate">—</b>
+        شماره سند: <span id="pdfDocNo">—</span>
+      </div>
+    </div>
+
+    <div class="pdf-meta" id="pdfMeta"></div>
+
+    <div class="pdf-body">
+      <div class="pdf-body-title"><div class="bar"></div><h2>متن گزارش</h2></div>
+      <div class="pdf-report-text" id="pdfReportText"></div>
+    </div>
+
+    <div class="pdf-footer">
+      <div class="pdf-sign-grid">
+        <div class="pdf-sign-box">
+          <div class="lbl">نام و امضای پرستار</div>
+          <div class="line"></div>
+          <div class="sub" id="pdfNurseName">.....................................</div>
+        </div>
+        <div class="pdf-sign-box">
+          <div class="lbl">مهر واحد / بخش</div>
+          <div class="pdf-stamp-circle">محل مهر</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-bottombar">
+      <span class="tag">محرمانه — ویژه پرونده بیمار</span>
+      <span>این سند به‌صورت الکترونیکی تولید شده و پس از امضا و مهر معتبر است.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   ابزارهای کمکی
+--------------------------------------------------------- */
+const FA_NUM = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function faNum(n){ return String(n).replace(/[0-9]/g, d => FA_NUM[d]); }
+const OTHER = 'سایر';
+
+/* ---------------------------------------------------------
+   تعریف مراحل و فیلدها — همه ورودی‌ها انتخابی (select/chips) یا
+   اسلایدر (برای مقادیر عددی) هستند. فیلدهای «سایر» با متن آزاد
+   کوتاه تکمیل می‌شوند و شناسه‌های غیرقابل‌انتخاب (نام/پرستار) متن هستند.
+--------------------------------------------------------- */
+const STEPS = [
+  {
+    id:'patient', title:'اطلاعات بیمار', eyebrow:'شروع',
+    desc:'مشخصات پایه بیمار و شیفت جاری را وارد کنید.',
+    fields:[
+      {key:'name', label:'نام و نام خانوادگی بیمار', type:'text', placeholder:'مثلاً جواد عزتی'},
+      {key:'nurse', label:'نام پرستار ثبت‌کننده', type:'text', placeholder:'مثلاً سارا محمدی'},
+      {key:'age', label:'سن', type:'slider', min:0, max:100, step:1, default:40, unit:'سال'},
+      {key:'bed', label:'شماره تخت', type:'slider', min:1, max:40, step:1, default:1, unit:''},
+      {key:'shift', label:'شیفت', type:'select', options:['صبح','عصر','شب']},
+      {key:'diagnosis', label:'تشخیص پزشکی', type:'select', options:['پنومونی','COPD تشدیدشده','نارسایی قلبی','سکته مغزی (CVA)','دیابت و عوارض آن','عفونت ادراری','پس از عمل جراحی','سپسیس','تروما',OTHER]},
+    ]
+  },
+  {
+    id:'cns', title:'مغز و اعصاب (CNS)', eyebrow:'سیستم ۱ از ۸',
+    desc:'سطح هوشیاری، گلاسکو، درد و اتصالات مرتبط با سیستم عصبی.',
+    fields:[
+      {key:'loc', label:'سطح هوشیاری (LOC)', type:'select', options:['Alert','Lethargic','Confusion','Obtundation','Stupor','Coma']},
+      {key:'orientation', label:'آگاهی به', type:'chips', options:['زمان','مکان','شخص']},
+      {key:'gcs', label:'نمره GCS', type:'slider', min:3, max:15, step:1, default:15},
+      {key:'pupils', label:'وضعیت مردمک‌ها', type:'select', options:['ایزوکور و واکنش‌پذیر به نور','آنیزوکور','میدریاز دوطرفه','میوز دوطرفه','عدم واکنش به نور',OTHER]},
+      {key:'pain_score', label:'شدت درد', type:'slider', min:0, max:10, step:1, default:0, unit:'از ۱۰'},
+      {key:'pain_location', label:'محل درد (غیر شکمی)', type:'select', options:['ندارد','سر','گردن','کمر','اندام فوقانی','اندام تحتانی',OTHER]},
+      {key:'sedative', label:'نیاز به داروی مخدر/آرام‌بخش', type:'checkbox'},
+      {key:'sedative_name', label:'نام داروی تزریقی مرتبط', type:'select', options:['مورفین','فنتانیل','میدازولام','پروپوفول',OTHER], when:s=>s.sedative},
+      {key:'paralytic', label:'نیاز به داروی فلج‌کننده عصبی-عضلانی', type:'checkbox'},
+      {key:'lines', label:'وضعیت اتصالات (مانیتورینگ و...)', type:'select', options:['طبیعی','ترشح غیرطبیعی','خارج‌شدگی نسبی','عدم کارکرد صحیح',OTHER]},
+      {key:'consult', label:'مشاوره پزشکی مرتبط', type:'select', options:['ندارد','مغز و اعصاب','جراحی مغز و اعصاب','روان‌پزشکی',OTHER]},
+      {key:'diagnostics', label:'تست‌های تشخیصی انجام‌شده', type:'chips', options:['CT اسکن مغز','MRI','EEG','پونکسیون کمری','بدون اقدام خاص',OTHER], span2:true},
+    ]
+  },
+  {
+    id:'resp', title:'تنفسی (Respiratory)', eyebrow:'سیستم ۲ از ۸',
+    desc:'راه هوایی، الگوی تنفس، اکسیژن‌رسانی و صداهای ریوی.',
+    fields:[
+      {key:'airway', label:'نوع راه هوایی', type:'select', options:['تنفس خودبه‌خودی','ETT','تراکئوستومی']},
+      {key:'airway_position', label:'وضعیت تثبیت راه هوایی مصنوعی', type:'select', options:['ثابت و بدون جابجایی','نیاز به تنظیم مجدد',OTHER], when:s=>s.airway && s.airway!=='تنفس خودبه‌خودی'},
+      {key:'cuff_pressure', label:'فشار کاف', type:'slider', min:18, max:30, step:1, default:22, unit:'cmH2O', when:s=>s.airway && s.airway!=='تنفس خودبه‌خودی'},
+      {key:'rr', label:'تعداد تنفس (RR)', type:'slider', min:8, max:40, step:1, default:16, unit:'در دقیقه'},
+      {key:'pattern', label:'الگوی تنفس', type:'select', options:['منظم','نامنظم','سطحی','عمیق','دیسپنه','ارتوپنه']},
+      {key:'symmetry', label:'قرینه بودن حرکات قفسه سینه', type:'checkbox'},
+      {key:'spo2', label:'SpO₂', type:'slider', min:70, max:100, step:1, default:98, unit:'%'},
+      {key:'o2_need', label:'نیاز به اکسیژن‌تراپی', type:'checkbox'},
+      {key:'o2_detail', label:'نحوه دریافت اکسیژن', type:'select', options:['نازال کانولا ۲ لیتر','نازال کانولا ۴ لیتر','ماسک ساده','ماسک ونتوری','ماسک ریزرو',OTHER], when:s=>s.o2_need},
+      {key:'breath_sounds', label:'صداهای تنفسی', type:'select', options:['طبیعی','رال (Rales)','ویزینگ','استریدور','کاهش‌یافته']},
+      {key:'cough_sputum', label:'سرفه و خلط', type:'select', options:['بدون سرفه','سرفه خشک','سرفه با خلط سفید','سرفه با خلط زرد','سرفه با خلط سبز','سرفه خونی',OTHER]},
+      {key:'suction', label:'انجام ساکشن ترشحات', type:'checkbox'},
+      {key:'ventilator', label:'تغییرات تنظیمات ونتیلاتور', type:'select', options:['بدون تغییر','افزایش FiO2','کاهش FiO2','تغییر مود تهویه',OTHER]},
+      {key:'chest_tube', label:'وضعیت Chest Tube', type:'select', options:['ندارد','تخلیه طبیعی','تخلیه غیرطبیعی',OTHER]},
+      {key:'diagnostics', label:'تست‌های تشخیصی', type:'chips', options:['ABG','CXR','کشت خلط','بدون اقدام',OTHER], span2:true},
+    ]
+  },
+  {
+    id:'cvs', title:'قلبی-عروقی (CVS)', eyebrow:'سیستم ۳ از ۸',
+    desc:'علائم حیاتی، نبض‌های محیطی، خطوط وریدی و مایع‌درمانی.',
+    fields:[
+      {key:'bp_sys', label:'فشار خون سیستولیک', type:'slider', min:60, max:220, step:5, default:120, unit:'mmHg'},
+      {key:'bp_dia', label:'فشار خون دیاستولیک', type:'slider', min:30, max:140, step:5, default:80, unit:'mmHg'},
+      {key:'hr', label:'ضربان قلب (HR)', type:'slider', min:30, max:200, step:1, default:80, unit:'در دقیقه'},
+      {key:'rhythm', label:'ریتم قلبی', type:'select', options:['منظم','نامنظم']},
+      {key:'arrhythmia', label:'نوع آریتمی', type:'select', options:['ندارد','تاکی‌کاردی سینوسی','برادی‌کاردی سینوسی','فیبریلاسیون دهلیزی','PVC',OTHER], when:s=>s.rhythm==='نامنظم'},
+      {key:'temp', label:'درجه حرارت بدن', type:'slider', min:34, max:41, step:0.1, default:37, unit:'°C'},
+      {key:'pulses', label:'نبض‌های محیطی', type:'select', options:['قابل لمس و منظم','ضعیف','نامنظم','غیرقابل لمس',OTHER]},
+      {key:'cvp_measured', label:'اندازه‌گیری CVP انجام شد', type:'checkbox'},
+      {key:'cvp', label:'فشار ورید مرکزی (CVP)', type:'slider', min:0, max:20, step:1, default:8, unit:'cmH2O', when:s=>s.cvp_measured},
+      {key:'line_site', label:'وضعیت کاتتر وریدی', type:'select', options:['طبیعی','قرمزی/تورم','ترشح غیرطبیعی','فلبیت']},
+      {key:'iv_fluid', label:'نوع سرم دریافتی', type:'select', options:['سرم نرمال سالین','سرم رینگر','دکستروز ۵٪','بدون سرم',OTHER]},
+      {key:'iv_med', label:'داروی تزریقی/انفوزیون مرتبط', type:'select', options:['ندارد','نوراپی‌نفرین','دوپامین','دیگوکسین','هپارین',OTHER]},
+      {key:'bleeding', label:'خونریزی', type:'select', options:['ندارد','خفیف','متوسط','شدید']},
+      {key:'diagnostics', label:'پروسیجرهای تشخیصی', type:'chips', options:['نوار قلب','اکوکاردیوگرافی','آنژیوگرافی','بدون اقدام',OTHER], span2:true},
+    ]
+  },
+  {
+    id:'skin', title:'پوست (Skin)', eyebrow:'سیستم ۴ از ۸',
+    desc:'یکپارچگی پوست، ریسک زخم فشاری و مراقبت‌های انجام‌شده.',
+    fields:[
+      {key:'color_texture', label:'رنگ پوست', type:'select', options:['طبیعی','رنگ‌پریده','سیانوتیک','یرقانی',OTHER]},
+      {key:'moisture', label:'رطوبت پوست', type:'select', options:['طبیعی','خشک','مرطوب']},
+      {key:'lesions', label:'یافته‌های پوستی', type:'chips', options:['ندارد','ادم','هماتوم','اکیموز','سلولیت']},
+      {key:'pressure_ulcer_stage', label:'زخم فشاری', type:'select', options:['ندارد','مرحله ۱','مرحله ۲','مرحله ۳','مرحله ۴','غیرقابل مرحله‌بندی']},
+      {key:'ulcer_length', label:'طول زخم', type:'slider', min:0, max:20, step:0.5, default:2, unit:'cm', when:s=>s.pressure_ulcer_stage && s.pressure_ulcer_stage!=='ندارد'},
+      {key:'ulcer_width', label:'عرض زخم', type:'slider', min:0, max:20, step:0.5, default:2, unit:'cm', when:s=>s.pressure_ulcer_stage && s.pressure_ulcer_stage!=='ندارد'},
+      {key:'ulcer_depth', label:'عمق زخم', type:'slider', min:0, max:10, step:0.5, default:0.5, unit:'cm', when:s=>s.pressure_ulcer_stage && s.pressure_ulcer_stage!=='ندارد'},
+      {key:'braden', label:'نمره معیار برادن', type:'slider', min:6, max:23, step:1, default:18},
+      {key:'temp_skin', label:'دمای پوست', type:'select', options:['طبیعی','گرم','سرد']},
+      {key:'dressing', label:'پانسمان / درن جراحی', type:'select', options:['ندارد','پانسمان تمیز و خشک','پانسمان با ترشح','نیاز به تعویض',OTHER]},
+      {key:'surgical_wound', label:'وضعیت زخم جراحی', type:'select', options:['ندارد','بدون التهاب','قرمزی خفیف','ترشح چرکی','باز شدن لبه زخم',OTHER]},
+      {key:'position_change', label:'تغییر وضعیت (Position Change) انجام شد', type:'checkbox'},
+      {key:'skin_care', label:'مراقبت‌های پوستی انجام‌شده', type:'chips', options:['ماساژ پشت و اندام‌ها','تعویض پانسمان','بدون اقدام خاص',OTHER], span2:true},
+    ]
+  },
+  {
+    id:'gu', title:'ادراری-تناسلی (GU)', eyebrow:'سیستم ۵ از ۸',
+    desc:'کاتتر ادراری، تعادل مایعات و یافته‌های غیرطبیعی.',
+    fields:[
+      {key:'catheter_type', label:'نوع کاتتر ادراری', type:'select', options:['ندارد (دفع خودبه‌خودی)','Foley/Internal','External','Suprapubic','Urostomy','Nephrostomy']},
+      {key:'urine_amount', label:'میزان ادرار', type:'slider', min:0, max:3000, step:50, default:500, unit:'cc', when:s=>s.catheter_type && s.catheter_type!=='ندارد (دفع خودبه‌خودی)'},
+      {key:'urine_frequency', label:'تعداد دفعات ادرار', type:'slider', min:0, max:10, step:1, default:4, unit:'نوبت', when:s=>s.catheter_type==='ندارد (دفع خودبه‌خودی)'},
+      {key:'urine_quality', label:'رنگ و کیفیت ادرار', type:'select', options:['زرد روشن و شفاف','کدر','تیره','هماچوریک',OTHER]},
+      {key:'intake', label:'مایعات دریافتی', type:'slider', min:0, max:3000, step:50, default:1000, unit:'cc'},
+      {key:'output', label:'مایعات دفعی', type:'slider', min:0, max:3000, step:50, default:1000, unit:'cc'},
+      {key:'iv_med', label:'داروی تزریقی مرتبط', type:'select', options:['ندارد','دیورتیک (فوروزماید)','مایع‌درمانی وریدی',OTHER]},
+      {key:'abnormal', label:'یافته‌های غیرطبیعی', type:'chips', options:['ندارد','هماچوری','ادرار کدر','دیزوری','احتباس ادراری',OTHER]},
+      {key:'diagnostics', label:'تست‌های تشخیصی', type:'chips', options:['آزمایش ادرار','سونوگرافی کلیه و مجاری ادراری','بدون اقدام',OTHER], span2:true},
+    ]
+  },
+  {
+    id:'gi', title:'گوارشی (GI)', eyebrow:'سیستم ۶ از ۸',
+    desc:'تغذیه، صداهای روده‌ای و الگوی دفعی.',
+    fields:[
+      {key:'feeding', label:'وضعیت تغذیه', type:'select', options:['PO (خوراکی)','NPO','NG tube','OG tube','استومی']},
+      {key:'diet_percent', label:'درصد مصرف وعده غذایی', type:'slider', min:0, max:100, step:5, default:100, unit:'%', when:s=>s.feeding==='PO (خوراکی)'},
+      {key:'residual', label:'باقی‌مانده معده (Residual)', type:'select', options:['ندارد','کمتر از ۵۰ سی‌سی','۵۰ تا ۱۵۰ سی‌سی','بیشتر از ۱۵۰ سی‌سی'], when:s=>s.feeding==='NG tube'||s.feeding==='OG tube'},
+      {key:'abdominal_pain', label:'درد شکمی / نفخ / آسیت', type:'chips', options:['ندارد','درد خفیف','درد متوسط','درد شدید','نفخ','آسیت']},
+      {key:'bowel_sounds', label:'صداهای روده‌ای', type:'select', options:['طبیعی','افزایش‌یافته','کاهش‌یافته','فاقد صدا']},
+      {key:'bowel_pattern', label:'الگوی دفعی', type:'select', options:['طبیعی روزانه','اسهال','یبوست','ملنا','بدون دفع در این شیفت',OTHER]},
+      {key:'bleeding', label:'خونریزی گوارشی', type:'select', options:['ندارد','خفیف','متوسط','شدید']},
+      {key:'diagnostics', label:'پروسیجرهای انجام‌شده', type:'chips', options:['آندوسکوپی','کولونوسکوپی','آزمایش مدفوع','بدون اقدام',OTHER], span2:true},
+    ]
+  },
+  {
+    id:'ms', title:'عضلانی-اسکلتی (MS)', eyebrow:'سیستم ۷ از ۸',
+    desc:'وضعیت حرکتی، ریسک سقوط و ایمنی بیمار.',
+    fields:[
+      {key:'mobility', label:'وضعیت حرکتی', type:'select', options:['CBR','Bed rest','OOB با کمک','راه‌رفتن مستقل']},
+      {key:'rom_strength', label:'دامنه حرکتی و قدرت عضلانی', type:'select', options:['طبیعی و کامل','محدودیت خفیف','محدودیت متوسط','ضعف/فلج شدید']},
+      {key:'assistive_device', label:'وسیله کمک حرکتی', type:'select', options:['ندارد','واکر','عصا','ویلچر']},
+      {key:'morse_score', label:'نمره ریسک سقوط (معیار مورس)', type:'slider', min:0, max:125, step:5, default:25},
+      {key:'siderail', label:'ساید ریل بالا قرار داده شد', type:'checkbox'},
+      {key:'pt_needed', label:'نیاز به فیزیوتراپی', type:'checkbox'},
+      {key:'ms_pain', label:'درد عضلانی-اسکلتی', type:'select', options:['ندارد','خفیف','متوسط','شدید']},
+    ]
+  },
+  {
+    id:'psych', title:'روانی-رفتاری-اجتماعی', eyebrow:'سیستم ۸ از ۸',
+    desc:'وضعیت رفتاری بیمار و نیاز به مشاوره روان‌پزشکی.',
+    fields:[
+      {key:'behavior', label:'وضعیت رفتاری', type:'chips', options:['آرام و همکاری‌کننده','مضطرب','بی‌قرار','علائم افسردگی','نیاز به آموزش']},
+      {key:'consult', label:'نیاز به مشاوره روان‌پزشکی', type:'checkbox'},
+    ]
+  },
+];
+
+const state = {};
+STEPS.forEach(s => {
+  state[s.id] = {};
+  s.fields.forEach(f => {
+    if(f.type === 'slider') state[s.id][f.key] = f.default;
+  });
+});
+let currentIndex = 0;
+const REVIEW_INDEX = STEPS.length;
+const TOTAL_STEPS = STEPS.length + 1;
+
+let reportText = '';
+let isGenerating = false;
+let generationError = '';
+
+/* ---------------------------------------------------------
+   Sidebar / progress
+--------------------------------------------------------- */
+function renderSidebar(){
+  const el = document.getElementById('sidebar');
+  el.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const item = document.createElement('div');
+    item.className = 'step-item' + (i === currentIndex ? ' active' : '') + (i < currentIndex ? ' done' : '');
+    item.innerHTML = `<div class="step-num">${i < currentIndex ? '✓' : faNum(i+1)}</div><div class="step-label">${s.title}</div>`;
+    item.onclick = () => { currentIndex = i; render(); };
+    el.appendChild(item);
+  });
+  const reviewItem = document.createElement('div');
+  reviewItem.className = 'step-item' + (currentIndex === REVIEW_INDEX ? ' active' : '');
+  reviewItem.innerHTML = `<div class="step-num">${faNum(STEPS.length+1)}</div><div class="step-label">بازبینی و تولید گزارش</div>`;
+  reviewItem.onclick = () => { currentIndex = REVIEW_INDEX; render(); };
+  el.appendChild(reviewItem);
+}
+
+function renderMobileProgress(){
+  const title = currentIndex === REVIEW_INDEX ? 'بازبینی و تولید گزارش' : STEPS[currentIndex].title;
+  document.getElementById('mobileStepTitle').textContent = title;
+  document.getElementById('mobileStepCount').textContent = `${faNum(currentIndex+1)} / ${faNum(TOTAL_STEPS)}`;
+  document.getElementById('progressFill').style.width = ((currentIndex+1)/TOTAL_STEPS*100) + '%';
+  document.getElementById('headerMeta').textContent = `مرحله ${faNum(currentIndex+1)} از ${faNum(TOTAL_STEPS)}`;
+}
+
+/* ---------------------------------------------------------
+   فرمت مقدار اسلایدر برای نمایش
+--------------------------------------------------------- */
+function fmtSliderVal(f, v){
+  let n = v;
+  if(f.step && f.step < 1){ n = Number(v).toFixed(1); } else { n = Math.round(v); }
+  return faNum(n) + (f.unit ? ' ' + f.unit : '');
+}
+
+/* ---------------------------------------------------------
+   رندر یک فیلد
+--------------------------------------------------------- */
+function fieldHTML(stepId, f, stepState){
+  if(f.when && !f.when(stepState)) return '';
+  const val = stepState[f.key];
+  const spanClass = f.span2 ? ' span-2' : '';
+
+  if(f.type === 'text'){
+    return `<div class="field${spanClass}">
+      <label>${f.label}</label>
+      <input type="text" data-step="${stepId}" data-key="${f.key}" placeholder="${f.placeholder||''}" value="${val!==undefined?val:''}">
+    </div>`;
+  }
+
+  if(f.type === 'checkbox'){
+    return `<div class="field${spanClass}">
+      <label class="check-row">
+        <span>${f.label}</span>
+        <input type="checkbox" data-step="${stepId}" data-key="${f.key}" ${val ? 'checked' : ''}>
+      </label>
+    </div>`;
+  }
+
+  if(f.type === 'slider'){
+    return `<div class="field${spanClass}">
+      <label>${f.label} <span class="val-badge">${fmtSliderVal(f, val!==undefined?val:f.default)}</span></label>
+      <div class="slider-wrap">
+        <input type="range" min="${f.min}" max="${f.max}" step="${f.step||1}" value="${val!==undefined?val:f.default}" data-step="${stepId}" data-key="${f.key}" data-role="slider">
+      </div>
+      <div class="slider-minmax"><span>${faNum(f.min)}</span><span>${faNum(f.max)}</span></div>
+    </div>`;
+  }
+
+  if(f.type === 'chips'){
+    const selected = val || [];
+    const chips = f.options.map(opt => `<div class="chip ${selected.includes(opt) ? 'selected' : ''}" data-step="${stepId}" data-key="${f.key}" data-chip="${opt}">${opt}</div>`).join('');
+    const otherVal = stepState[f.key+'__other'];
+    const showOther = selected.includes(OTHER);
+    return `<div class="field${spanClass}">
+      <label>${f.label}</label>
+      <div class="chip-group">${chips}</div>
+      ${showOther ? `<input class="other-input" type="text" placeholder="توضیح مورد «سایر»" data-step="${stepId}" data-key="${f.key}__other" value="${otherVal||''}">` : ''}
+    </div>`;
+  }
+
+  if(f.type === 'select'){
+    const opts = ['<option value="" disabled ' + (!val ? 'selected' : '') + '>انتخاب کنید</option>']
+      .concat(f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`)).join('');
+    const otherVal = stepState[f.key+'__other'];
+    const showOther = val === OTHER;
+    return `<div class="field${spanClass}">
+      <label>${f.label}</label>
+      <select data-step="${stepId}" data-key="${f.key}">${opts}</select>
+      ${showOther ? `<input class="other-input" type="text" placeholder="توضیح مورد «سایر»" data-step="${stepId}" data-key="${f.key}__other" value="${otherVal||''}">` : ''}
+    </div>`;
+  }
+
+  return '';
+}
+
+function bindFieldEvents(container){
+  container.querySelectorAll('input[type=text]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      state[e.target.dataset.step][e.target.dataset.key] = e.target.value;
+    });
+  });
+  container.querySelectorAll('select').forEach(sel => {
+    sel.addEventListener('change', e => {
+      state[e.target.dataset.step][e.target.dataset.key] = e.target.value;
+      renderPanel();
+    });
+  });
+  container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      state[e.target.dataset.step][e.target.dataset.key] = e.target.checked;
+      renderPanel();
+    });
+  });
+  container.querySelectorAll('input[type=range]').forEach(rng => {
+    const stepId = rng.dataset.step, key = rng.dataset.key;
+    const stepDef = STEPS.find(s=>s.id===stepId);
+    const fieldDef = stepDef.fields.find(f=>f.key===key);
+    rng.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      state[stepId][key] = v;
+      const label = e.target.closest('.field').querySelector('.val-badge');
+      if(label) label.textContent = fmtSliderVal(fieldDef, v);
+    });
+  });
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', e => {
+      const {step, key, chip: val} = e.currentTarget.dataset;
+      if(!state[step][key]) state[step][key] = [];
+      const arr = state[step][key];
+      const idx = arr.indexOf(val);
+      if(idx > -1) arr.splice(idx,1); else arr.push(val);
+      renderPanel();
+    });
+  });
+}
+
+/* ---------------------------------------------------------
+   رندر پنل اصلی
+--------------------------------------------------------- */
+function renderPanel(){
+  const panel = document.getElementById('panel');
+
+  if(isGenerating){
+    panel.innerHTML = `<div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>در حال تدوین گزارش پرستاری بر اساس اطلاعات ثبت‌شده...</p>
+    </div>`;
+    return;
+  }
+
+  if(reportText){
+    panel.innerHTML = `
+      <div class="panel-head">
+        <p class="eyebrow">خروجی نهایی</p>
+        <h2>گزارش پرستاری تولیدشده</h2>
+        <p>متن قابل ویرایش است. پیش از ثبت نهایی در پرونده بیمار، آن را بازبینی کنید.</p>
+      </div>
+      <div class="report-toolbar">
+        <button class="btn btn-primary" id="editToggleBtn">ویرایش متن</button>
+        <button class="btn btn-ghost" id="copyBtn">کپی گزارش</button>
+        <button class="btn btn-ghost" id="downloadBtn">دانلود (txt)</button>
+        <button class="btn btn-primary" id="pdfBtn" style="background:var(--accent-dark);">📄 چاپ / دانلود PDF</button>
+        <button class="btn btn-ghost" id="backToReviewBtn">بازگشت به بازبینی</button>
+      </div>
+      <div class="report-text" id="reportTextEl" contenteditable="false">${escapeHTML(reportText)}</div>
+      <div class="badge-note">راهنما: با کلیک روی «چاپ / دانلود PDF»، پنجره چاپ مرورگر باز می‌شود؛ در بخش «مقصد» (Destination) گزینه‌ی «Save as PDF» را انتخاب کنید. برای نتیجه تمیزتر، گزینه‌ی «سربرگ و پاورقی» (Headers and footers) را غیرفعال و حاشیه (Margins) را روی «هیچ‌کدام» (None) قرار دهید.</div>
+      <div class="badge-note">${window.__usedFallback ? 'این گزارش به‌صورت محلی (بدون نیاز به اتصال اینترنت) و بر اساس داده‌های ثبت‌شده و استاندارد «گزارش پرستاری سیستم به سیستم» تدوین شده است. ' : 'این گزارش بر پایه داده‌های ثبت‌شده توسط شما و با مرجعیت استاندارد «گزارش پرستاری سیستم به سیستم در بخش بستری عمومی» تهیه شده است. '}پیش از ثبت نهایی در پرونده بیمار، آن را بازبینی و امضا کنید.</div>
+    `;
+    document.getElementById('editToggleBtn').onclick = (e) => {
+      const el = document.getElementById('reportTextEl');
+      const editing = el.getAttribute('contenteditable') === 'true';
+      el.setAttribute('contenteditable', editing ? 'false' : 'true');
+      e.target.textContent = editing ? 'ویرایش متن' : 'پایان ویرایش';
+      if(editing){ reportText = el.innerText; }
+      el.focus();
+    };
+    document.getElementById('copyBtn').onclick = () => {
+      const el = document.getElementById('reportTextEl');
+      navigator.clipboard.writeText(el.innerText).then(()=>{
+        const b = document.getElementById('copyBtn');
+        const old = b.textContent; b.textContent = 'کپی شد ✓';
+        setTimeout(()=>b.textContent = old, 1500);
+      });
+    };
+    document.getElementById('downloadBtn').onclick = () => {
+      const el = document.getElementById('reportTextEl');
+      const blob = new Blob([el.innerText], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'گزارش-پرستاری.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    document.getElementById('backToReviewBtn').onclick = () => {
+      reportText = '';
+      currentIndex = REVIEW_INDEX;
+      render();
+    };
+    document.getElementById('pdfBtn').onclick = (e) => {
+      const el = document.getElementById('reportTextEl');
+      exportReportAsPDF(el.innerText, e.target);
+    };
+    return;
+  }
+
+  if(currentIndex === REVIEW_INDEX){
+    let cards = STEPS.map((s, i) => {
+      const entries = visibleFieldValues(s);
+      const summary = entries.length
+        ? entries.map(e => e.display).slice(0,4).join(' · ')
+        : '<span class="review-empty">داده‌ای ثبت نشده — برای تکمیل کلیک کنید</span>';
+      return `<div class="review-card" data-idx="${i}">
+        <div class="review-card-top"><strong>${s.title}</strong><span>${entries.length ? faNum(entries.length) + ' مورد' : 'خالی'}</span></div>
+        <p>${summary}</p>
+      </div>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="panel-head">
+        <p class="eyebrow">مرحله پایانی</p>
+        <h2>بازبینی اطلاعات</h2>
+        <p>پیش از تولید گزارش، خلاصه هر سیستم را بررسی کنید. برای ویرایش هر بخش روی آن کلیک کنید.</p>
+      </div>
+      <div class="review-list">${cards}</div>
+      <div class="generate-box">
+        <h3>گزارش پرستاری جامع را تولید کن</h3>
+        <p>متن نهایی به سبک روایی و حرفه‌ای، سیستم به سیستم و بر اساس اطلاعات بالا نوشته می‌شود.</p>
+        <button class="btn btn-primary" id="generateBtn">تولید گزارش</button>
+        ${generationError ? `<div class="error-box">${generationError}</div>` : ''}
+      </div>
+    `;
+    panel.querySelectorAll('.review-card').forEach(c => {
+      c.onclick = () => { currentIndex = parseInt(c.dataset.idx); render(); };
+    });
+    document.getElementById('generateBtn').onclick = generateReport;
+    return;
+  }
+
+  const step = STEPS[currentIndex];
+  const stepState = state[step.id];
+  const fields = step.fields.map(f => fieldHTML(step.id, f, stepState)).join('');
+  panel.innerHTML = `
+    <div class="panel-head">
+      <p class="eyebrow">${step.eyebrow}</p>
+      <h2>${step.title}</h2>
+      <p>${step.desc}</p>
+    </div>
+    <div class="field-grid">${fields}</div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="prevBtn" ${currentIndex===0?'disabled':''}>مرحله قبل</button>
+      <button class="btn btn-primary" id="nextBtn">${currentIndex===STEPS.length-1 ? 'رفتن به بازبینی' : 'مرحله بعد'}</button>
+    </div>
+  `;
+  bindFieldEvents(panel);
+  document.getElementById('prevBtn').onclick = () => { if(currentIndex>0){currentIndex--; render();} };
+  document.getElementById('nextBtn').onclick = () => { currentIndex++; render(); };
+}
+
+function escapeHTML(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function render(){
+  renderSidebar();
+  renderMobileProgress();
+  renderPanel();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ---------------------------------------------------------
+   استخراج مقادیر قابل‌نمایش هر مرحله (با احترام به when/other)
+--------------------------------------------------------- */
+function displayValueForField(f, stepState){
+  if(f.when && !f.when(stepState)) return null;
+  let v = stepState[f.key];
+
+  if(f.type === 'slider'){
+    return fmtSliderVal(f, v!==undefined?v:f.default);
+  }
+  if(f.type === 'checkbox'){
+    return v ? 'بله' : null;
+  }
+  if(f.type === 'select'){
+    if(!v) return null;
+    if(v === OTHER) return stepState[f.key+'__other'] || OTHER;
+    return v;
+  }
+  if(f.type === 'chips'){
+    if(!v || v.length===0) return null;
+    return v.map(x => x===OTHER ? (stepState[f.key+'__other']||OTHER) : x).join('، ');
+  }
+  if(f.type === 'text'){
+    return v || null;
+  }
+  return null;
+}
+
+function visibleFieldValues(step){
+  const stepState = state[step.id];
+  const out = [];
+  step.fields.forEach(f => {
+    const disp = displayValueForField(f, stepState);
+    if(disp !== null && disp !== undefined && disp !== '') out.push({label:f.label, display: disp});
+  });
+  return out;
+}
+
+/* ---------------------------------------------------------
+   ساخت خلاصه داده برای پرامپت مدل
+--------------------------------------------------------- */
+function buildDataSummary(){
+  let out = '';
+  STEPS.forEach(s => {
+    if(s.id === 'patient') return;
+    const entries = visibleFieldValues(s);
+    if(entries.length === 0) return;
+    out += `\n### ${s.title}\n`;
+    entries.forEach(e => { out += `- ${e.label}: ${e.display}\n`; });
+  });
+  return out.trim();
+}
+
+const GUIDELINE_RULES = `
+قواعد ثبت طبق استاندارد بیمارستانی «گزارش پرستاری سیستم به سیستم»:
+- گزارش باید سیستم‌به‌سیستم و به‌صورت روایی (پاراگرافی، نه فهرستی) نوشته شود، دقیقاً با لحن و ساختار نمونه مرجع ارائه‌شده.
+- برای هر سیستم که داده‌ای ثبت شده، یک پاراگراف مستقل و روان بنویس؛ اگر سیستمی داده‌ای ندارد آن را بدون حاشیه‌سازی حذف کن.
+- درد و خونریزی باید تحت سیستم مرتبط با محل آن ثبت شود (مثلاً درد شکمی زیر گوارشی، نه زیر عصبی).
+- مشاوره‌های پزشکی زیر سیستم مرتبط با همان مشاوره نوشته شود.
+- نام داروهای تزریقی/انفوزیون وریدی مرتبط با هر سیستم زیر همان سیستم بیاید.
+- اقدامات انجام‌شده و نتایج حاصل از هر اقدام یا پروسیجر باید ذکر شود.
+- از تکرار خام داده‌های عددی/برچسب فرم خودداری کن؛ آن‌ها را در جملات بالینی طبیعی ادغام کن.
+- در پایان گزارش، جمع‌بندی کوتاه وضعیت کلی بیمار در پایان شیفت و سپس خط «نام و امضای پرستار: ........................» و «ساعت ثبت: ........................» بیاور.
+`;
+
+const STYLE_EXAMPLE = `بیمار آقای جواد عزتی، ۴۸ ساله، با تشخیص پزشکی پنومونی، از همکار شیفت قبل تحویل گرفته شد. بیمار در تخت شماره ۱۲ بستری بوده، هوشیار و Alert، آگاه به زمان، مکان و شخص و دارای GCS=15/15 می‌باشد. مردمک‌ها ایزوکور و واکنش به نور مناسب است. بیمار از سردرد و اختلال سطح هوشیاری شکایتی ندارد. درد قفسه سینه هنگام سرفه با شدت ۳ از ۱۰ گزارش می‌نماید. اقدامات لازم انجام و وضعیت بیمار مجدداً ارزیابی شد.
+
+بیمار تنفس خودبه‌خودی داشته، RR=۲۰ بار در دقیقه، منظم و حرکات قفسه سینه قرینه می‌باشد. SpO₂ در هوای اتاق ۹۴٪ بوده و سرفه همراه با مقدار کمی خلط زردرنگ مشاهده شد. طبق دستور پزشک، اکسیژن‌تراپی با نازال کانولا با جریان ۲ لیتر در دقیقه برقرار گردید که پس از آن SpO₂ به ۹۷٪ افزایش یافت.
+
+در پایان شیفت، بیمار هوشیار، همکاری‌کننده و از نظر همودینامیک پایدار بوده و پس از انجام مراقبت‌های پرستاری، به همکار شیفت بعد تحویل گردید.
+
+نام و امضای پرستار: ........................
+ساعت ثبت: ........................`;
+
+/* ---------------------------------------------------------
+   تولید گزارش به‌صورت محلی (بدون نیاز به اتصال شبکه)
+   هر سیستم یک مجموعه «جمله‌ساز» دارد؛ فقط جملات مربوط به
+   فیلدهای پرشده در پاراگراف نهایی آن سیستم می‌آیند.
+--------------------------------------------------------- */
+function otherOrVal(stepState, key){
+  const v = stepState[key];
+  if(v === OTHER) return stepState[key+'__other'] || OTHER;
+  return v;
+}
+function chipsText(stepState, key){
+  const arr = stepState[key] || [];
+  return arr.map(x => x===OTHER ? (stepState[key+'__other']||OTHER) : x);
+}
+function sliderVal(f, stepState){
+  const v = stepState[f.key];
+  return v!==undefined ? v : f.default;
+}
+function fmtNum(f, v){
+  return f.step && f.step < 1 ? faNum(Number(v).toFixed(1)) : faNum(Math.round(v));
+}
+function joinSentences(list){
+  return list.filter(Boolean).join(' ');
+}
+
+function buildPatientIntro(){
+  const p = state.patient || {};
+  const name = p.name || 'بیمار';
+  const age = p.age !== undefined ? faNum(Math.round(p.age)) : null;
+  const diagnosis = otherOrVal(p, 'diagnosis');
+  const bed = p.bed !== undefined ? faNum(Math.round(p.bed)) : null;
+  let s = `بیمار ${name}`;
+  if(age) s += `، ${age} ساله،`;
+  if(diagnosis) s += ` با تشخیص پزشکی ${diagnosis}،`;
+  s += ' از همکار شیفت قبل تحویل گرفته شد.';
+  if(bed) s += ` بیمار در تخت شماره ${bed} بستری می‌باشد.`;
+  return s;
+}
+
+function buildCNS(){
+  const s = state.cns; const cnsStepDef = STEPS.find(x=>x.id==='cns');
+  const gcsField = cnsStepDef.fields.find(f=>f.key==='gcs');
+  const painField = cnsStepDef.fields.find(f=>f.key==='pain_score');
+  const sentences = [];
+  if(s.loc){
+    const orient = (s.orientation||[]).join('، ');
+    sentences.push(`بیمار از نظر سطح هوشیاری ${s.loc} بوده${orient ? ` و آگاه به ${orient} می‌باشد` : ''}.`);
+  }
+  if(s.gcs !== undefined) sentences.push(`نمره GCS بیمار ${fmtNum(gcsField, sliderVal(gcsField, s))}/۱۵ ثبت گردید.`);
+  if(s.pupils) sentences.push(`مردمک‌ها ${otherOrVal(s,'pupils')} می‌باشند.`);
+  if(s.pain_score !== undefined && s.pain_score > 0){
+    const loc = s.pain_location && s.pain_location!=='ندارد' ? ` در ناحیه ${otherOrVal(s,'pain_location')}` : '';
+    sentences.push(`بیمار دردی${loc} با شدت ${fmtNum(painField, sliderVal(painField,s))} از ۱۰ گزارش می‌نماید.`);
+  } else if(s.pain_score === 0){
+    sentences.push('بیمار از درد شکایتی ندارد.');
+  }
+  if(s.sedative) sentences.push(`با توجه به وضعیت بیمار، ${otherOrVal(s,'sedative_name')||'داروی آرام‌بخش'} طبق دستور پزشک تجویز گردید.`);
+  if(s.paralytic) sentences.push('داروی فلج‌کننده عصبی-عضلانی برای بیمار در نظر گرفته شد و پایش لازم انجام گردید.');
+  if(s.lines && s.lines!=='طبیعی') sentences.push(`در بررسی اتصالات مرتبط، ${otherOrVal(s,'lines')} مشاهده و اقدامات لازم انجام شد.`);
+  if(s.consult && s.consult!=='ندارد') sentences.push(`مشاوره ${otherOrVal(s,'consult')} جهت بیمار درخواست گردید.`);
+  const dx = chipsText(s,'diagnostics').filter(x=>x!=='بدون اقدام خاص');
+  if(dx.length) sentences.push(`بیمار تحت ${dx.join('، ')} قرار گرفت.`);
+  return joinSentences(sentences);
+}
+
+function buildResp(){
+  const s = state.resp; const step = STEPS.find(x=>x.id==='resp');
+  const rrF = step.fields.find(f=>f.key==='rr'), spo2F = step.fields.find(f=>f.key==='spo2'), cuffF = step.fields.find(f=>f.key==='cuff_pressure');
+  const sentences = [];
+  if(s.airway){
+    let base = s.airway==='تنفس خودبه‌خودی' ? 'بیمار تنفس خودبه‌خودی داشته' : `بیمار دارای راه هوایی ${s.airway} می‌باشد`;
+    if(s.rr!==undefined) base += `، RR=${fmtNum(rrF, sliderVal(rrF,s))} بار در دقیقه`;
+    if(s.pattern) base += ` و الگوی تنفس ${s.pattern}`;
+    base += s.symmetry ? ' با حرکات قرینه قفسه سینه' : '';
+    sentences.push(base + ' می‌باشد.');
+  }
+  if(s.airway && s.airway!=='تنفس خودبه‌خودی'){
+    if(s.airway_position) sentences.push(`وضعیت تثبیت راه هوایی ${otherOrVal(s,'airway_position')} گزارش شد.`);
+    if(s.cuff_pressure!==undefined) sentences.push(`فشار کاف ${fmtNum(cuffF, sliderVal(cuffF,s))} cmH2O ثبت گردید.`);
+  }
+  if(s.spo2!==undefined) sentences.push(`SpO₂ بیمار ${fmtNum(spo2F, sliderVal(spo2F,s))}٪ ثبت شد.`);
+  if(s.o2_need) sentences.push(`طبق دستور پزشک، اکسیژن‌تراپی با ${otherOrVal(s,'o2_detail')||'روش تجویزشده'} برقرار گردید.`);
+  if(s.breath_sounds && s.breath_sounds!=='طبیعی') sentences.push(`در سمع ریه، صدای ${s.breath_sounds} شنیده شد.`);
+  if(s.cough_sputum && s.cough_sputum!=='بدون سرفه') sentences.push(`${otherOrVal(s,'cough_sputum')} مشاهده گردید.`);
+  if(s.suction) sentences.push('ساکشن ترشحات انجام و وضعیت تنفسی بیمار مجدداً ارزیابی شد.');
+  if(s.ventilator && s.ventilator!=='بدون تغییر') sentences.push(`در تنظیمات ونتیلاتور، ${otherOrVal(s,'ventilator')} اعمال گردید.`);
+  if(s.chest_tube && s.chest_tube!=='ندارد') sentences.push(`Chest Tube بیمار با ${otherOrVal(s,'chest_tube')} گزارش شد.`);
+  const dx = chipsText(s,'diagnostics').filter(x=>x!=='بدون اقدام');
+  if(dx.length) sentences.push(`${dx.join('، ')} برای بیمار انجام و پیگیری گردید.`);
+  return joinSentences(sentences);
+}
+
+function buildCVS(){
+  const s = state.cvs; const step = STEPS.find(x=>x.id==='cvs');
+  const hrF = step.fields.find(f=>f.key==='hr'), tempF = step.fields.find(f=>f.key==='temp'), cvpF = step.fields.find(f=>f.key==='cvp');
+  const sentences = [];
+  if(s.bp_sys!==undefined && s.bp_dia!==undefined){
+    let base = `علائم حیاتی شامل BP=${faNum(Math.round(s.bp_sys))}/${faNum(Math.round(s.bp_dia))} mmHg`;
+    if(s.hr!==undefined) base += `، HR=${fmtNum(hrF, sliderVal(hrF,s))} ضربه در دقیقه`;
+    if(s.rhythm) base += ` با ریتم ${s.rhythm}`;
+    if(s.temp!==undefined) base += ` و T=${fmtNum(tempF, sliderVal(tempF,s))}°C`;
+    sentences.push(base + ' ثبت گردید.');
+  }
+  if(s.rhythm==='نامنظم' && s.arrhythmia && s.arrhythmia!=='ندارد') sentences.push(`نوع آریتمی ${otherOrVal(s,'arrhythmia')} گزارش شد.`);
+  if(s.pulses) sentences.push(`نبض‌های محیطی ${otherOrVal(s,'pulses')} می‌باشند.`);
+  if(s.cvp_measured && s.cvp!==undefined) sentences.push(`فشار ورید مرکزی (CVP) ${fmtNum(cvpF, sliderVal(cvpF,s))} cmH2O اندازه‌گیری شد.`);
+  if(s.line_site && s.line_site!=='طبیعی') sentences.push(`در بررسی کاتتر وریدی، ${s.line_site} مشاهده و اقدامات لازم انجام شد.`);
+  if(s.iv_fluid && s.iv_fluid!=='بدون سرم') sentences.push(`${otherOrVal(s,'iv_fluid')} طبق دستور پزشک برقرار می‌باشد.`);
+  if(s.iv_med && s.iv_med!=='ندارد') sentences.push(`داروی ${otherOrVal(s,'iv_med')} به‌صورت انفوزیون وریدی برای بیمار برقرار است.`);
+  if(s.bleeding && s.bleeding!=='ندارد') sentences.push(`خونریزی با شدت ${s.bleeding} گزارش و پیگیری شد.`);
+  const dx = chipsText(s,'diagnostics').filter(x=>x!=='بدون اقدام');
+  if(dx.length) sentences.push(`${dx.join('، ')} برای بیمار انجام و نتایج پیگیری گردید.`);
+  return joinSentences(sentences);
+}
+
+function buildSkin(){
+  const s = state.skin; const step = STEPS.find(x=>x.id==='skin');
+  const bradenF = step.fields.find(f=>f.key==='braden');
+  const sentences = [];
+  const colorParts = [s.color_texture, s.moisture].filter(x=>x && x!=='طبیعی');
+  if(s.color_texture || s.moisture){
+    sentences.push(`پوست بیمار ${s.temp_skin ? s.temp_skin + ' و ' : ''}${s.moisture || 'با رطوبت طبیعی'}${s.color_texture && s.color_texture!=='طبیعی' ? '، ' + otherOrVal(s,'color_texture') : ' و با رنگ طبیعی'} می‌باشد.`);
+  }
+  const lesions = (s.lesions||[]).filter(x=>x!=='ندارد');
+  if(lesions.length) sentences.push(`${lesions.join('، ')} در معاینه پوست مشاهده گردید.`);
+  else if((s.lesions||[]).includes('ندارد')) sentences.push('ادم، هماتوم، اکیموز یا سلولیت مشاهده نشد.');
+  if(s.pressure_ulcer_stage && s.pressure_ulcer_stage!=='ندارد'){
+    let dims = [];
+    if(s.ulcer_length!==undefined) dims.push(`طول ${faNum(s.ulcer_length)}`);
+    if(s.ulcer_width!==undefined) dims.push(`عرض ${faNum(s.ulcer_width)}`);
+    if(s.ulcer_depth!==undefined) dims.push(`عمق ${faNum(s.ulcer_depth)} سانتی‌متر`);
+    sentences.push(`زخم فشاری ${s.pressure_ulcer_stage} با ${dims.join('، ')} مشاهده و مراقبت‌های لازم انجام شد.`);
+  } else if(s.pressure_ulcer_stage==='ندارد'){
+    sentences.push('زخم فشاری مشاهده نشد.');
+  }
+  if(s.braden!==undefined) sentences.push(`امتیاز معیار برادن ${fmtNum(bradenF, sliderVal(bradenF,s))} ثبت گردید.`);
+  if(s.dressing && s.dressing!=='ندارد') sentences.push(`${otherOrVal(s,'dressing')} گزارش و مراقبت مربوطه انجام شد.`);
+  if(s.surgical_wound && s.surgical_wound!=='ندارد') sentences.push(`زخم جراحی از نظر ${otherOrVal(s,'surgical_wound')} بررسی گردید.`);
+  if(s.position_change) sentences.push('مراقبت پوستی و تغییر وضعیت بیمار صورت گرفت.');
+  const care = chipsText(s,'skin_care').filter(x=>x!=='بدون اقدام خاص');
+  if(care.length) sentences.push(`${care.join('، ')} انجام شد.`);
+  return joinSentences(sentences);
+}
+
+function buildGU(){
+  const s = state.gu; const step = STEPS.find(x=>x.id==='gu');
+  const uaF = step.fields.find(f=>f.key==='urine_amount'), ufF = step.fields.find(f=>f.key==='urine_frequency');
+  const inF = step.fields.find(f=>f.key==='intake'), outF = step.fields.find(f=>f.key==='output');
+  const sentences = [];
+  if(s.catheter_type){
+    if(s.catheter_type==='ندارد (دفع خودبه‌خودی)'){
+      sentences.push(`بیمار فاقد کاتتر ادراری بوده و دفع ادرار به‌صورت خودبه‌خودی${s.urine_frequency!==undefined ? ` (${fmtNum(ufF, sliderVal(ufF,s))} نوبت در این شیفت)` : ''} انجام می‌شود.`);
+    } else {
+      sentences.push(`بیمار دارای کاتتر ادراری از نوع ${s.catheter_type} می‌باشد${s.urine_amount!==undefined ? ` و میزان ادرار دفعی ${fmtNum(uaF, sliderVal(uaF,s))} سی‌سی ثبت گردید` : ''}.`);
+    }
+  }
+  if(s.urine_quality) sentences.push(`ادرار ${otherOrVal(s,'urine_quality')} می‌باشد.`);
+  if(s.intake!==undefined && s.output!==undefined){
+    sentences.push(`مایعات دریافتی ${fmtNum(inF, sliderVal(inF,s))} سی‌سی و مایعات دفعی ${fmtNum(outF, sliderVal(outF,s))} سی‌سی ثبت و بالانس مایعات پایش شد.`);
+  }
+  if(s.iv_med && s.iv_med!=='ندارد') sentences.push(`${otherOrVal(s,'iv_med')} طبق دستور پزشک برای بیمار تجویز گردید.`);
+  const ab = chipsText(s,'abnormal').filter(x=>x!=='ندارد');
+  if(ab.length) sentences.push(`${ab.join('، ')} مشاهده و پیگیری شد.`);
+  const dx = chipsText(s,'diagnostics').filter(x=>x!=='بدون اقدام');
+  if(dx.length) sentences.push(`${dx.join('، ')} برای بیمار انجام گردید.`);
+  return joinSentences(sentences);
+}
+
+function buildGI(){
+  const s = state.gi; const step = STEPS.find(x=>x.id==='gi');
+  const dpF = step.fields.find(f=>f.key==='diet_percent');
+  const sentences = [];
+  if(s.feeding){
+    if(s.feeding==='PO (خوراکی)'){
+      sentences.push(`بیمار رژیم غذایی خوراکی دریافت نموده${s.diet_percent!==undefined ? ` و حدود ${fmtNum(dpF, sliderVal(dpF,s))} درصد وعده غذایی را مصرف کرد` : ''}.`);
+    } else {
+      sentences.push(`وضعیت تغذیه بیمار ${s.feeding} می‌باشد.`);
+      if(s.residual && s.residual!=='ندارد') sentences.push(`باقی‌مانده معده (Residual) ${s.residual} گزارش گردید.`);
+    }
+  }
+  const pain = (s.abdominal_pain||[]).filter(x=>x!=='ندارد');
+  if(pain.length) sentences.push(`${pain.join('، ')} در معاینه شکم مشاهده شد.`);
+  else if((s.abdominal_pain||[]).includes('ندارد')) sentences.push('درد شکمی، نفخ یا آسیت مشاهده نشد.');
+  if(s.bowel_sounds) sentences.push(`صداهای روده‌ای ${s.bowel_sounds} می‌باشد.`);
+  if(s.bowel_pattern && s.bowel_pattern!=='طبیعی روزانه') sentences.push(`الگوی دفعی بیمار به‌صورت ${otherOrVal(s,'bowel_pattern')} گزارش گردید.`);
+  if(s.bleeding && s.bleeding!=='ندارد') sentences.push(`خونریزی گوارشی با شدت ${s.bleeding} مشاهده و پیگیری شد.`);
+  const dx = chipsText(s,'diagnostics').filter(x=>x!=='بدون اقدام');
+  if(dx.length) sentences.push(`${dx.join('، ')} برای بیمار انجام گردید.`);
+  return joinSentences(sentences);
+}
+
+function buildMS(){
+  const s = state.ms; const step = STEPS.find(x=>x.id==='ms');
+  const morseF = step.fields.find(f=>f.key==='morse_score');
+  const sentences = [];
+  if(s.mobility) sentences.push(`بیمار از نظر حرکتی در وضعیت ${s.mobility} قرار دارد${s.assistive_device && s.assistive_device!=='ندارد' ? ` و از ${s.assistive_device} استفاده می‌کند` : ''}.`);
+  if(s.rom_strength) sentences.push(`دامنه حرکتی و قدرت عضلانی ${s.rom_strength} گزارش گردید.`);
+  if(s.morse_score!==undefined) sentences.push(`امتیاز ریسک سقوط بر اساس معیار مورس ${fmtNum(morseF, sliderVal(morseF,s))} ثبت شد.`);
+  if(s.siderail) sentences.push('ساید ریل‌های تخت بالا قرار داده شد و آموزش‌های پیشگیری از سقوط به بیمار ارائه گردید.');
+  if(s.pt_needed) sentences.push('نیاز بیمار به فیزیوتراپی ثبت و درخواست مربوطه انجام شد.');
+  if(s.ms_pain && s.ms_pain!=='ندارد') sentences.push(`درد عضلانی-اسکلتی با شدت ${s.ms_pain} گزارش گردید.`);
+  return joinSentences(sentences);
+}
+
+function buildPsych(){
+  const s = state.psych;
+  const sentences = [];
+  const beh = s.behavior || [];
+  if(beh.length) sentences.push(`بیمار از نظر رفتاری ${beh.join('، ')} مشاهده شد.`);
+  if(s.consult) sentences.push('با توجه به وضعیت روانی بیمار، مشاوره روان‌پزشکی درخواست گردید.');
+  return joinSentences(sentences);
+}
+
+function buildLocalReport(){
+  const p = state.patient || {};
+  const parts = [];
+  parts.push(buildPatientIntro());
+  const cns = buildCNS(); if(cns) parts.push(cns);
+  const resp = buildResp(); if(resp) parts.push(resp);
+  const cvs = buildCVS(); if(cvs) parts.push(cvs);
+  const skin = buildSkin(); if(skin) parts.push(skin);
+  const gu = buildGU(); if(gu) parts.push(gu);
+  const gi = buildGI(); if(gi) parts.push(gi);
+  const ms = buildMS(); if(ms) parts.push(ms);
+  const psych = buildPsych(); if(psych) parts.push(psych);
+  parts.push('در پایان شیفت، بیمار پس از انجام مراقبت‌های پرستاری فوق، ارزیابی مجدد و در صورت لزوم به همکار شیفت بعد تحویل گردید.');
+  parts.push('\nنام و امضای پرستار: ........................\nساعت ثبت: ........................');
+  return parts.join('\n\n');
+}
+
+/* ---------------------------------------------------------
+   تلاش برای تولید با هوش مصنوعی (در پیش‌نمایش زنده Claude)
+   و در صورت عدم دسترسی به شبکه، بازگشت خودکار به تولید محلی
+--------------------------------------------------------- */
+async function generateReport(){
+  generationError = '';
+  isGenerating = true;
+  renderPanel();
+
+  const dataSummary = buildDataSummary();
+  const patient = state.patient || {};
+  const diagnosisVal = otherOrVal(patient, 'diagnosis');
+
+  const systemPrompt = `تو یک پرستار باتجربه بخش بستری عمومی هستی که گزارش تحویل شیفت (سیستم به سیستم) را می‌نویسی. زبان خروجی باید فارسی، حرفه‌ای، روان و بالینی باشد؛ دقیقاً با سبک نمونه‌ی زیر (لحن، طول جملات، حالت پاراگرافی):
+---
+${STYLE_EXAMPLE}
+---
+${GUIDELINE_RULES}
+خروجی فقط شامل متن گزارش باشد؛ بدون مقدمه، بدون توضیح اضافه، بدون Markdown، بدون تیتر انگلیسی برای بخش‌ها.`;
+
+  const userPrompt = `اطلاعات بیمار:
+نام: ${patient.name || 'ثبت نشده'} | سن: ${patient.age!==undefined?patient.age:'-'} | تخت: ${patient.bed!==undefined?patient.bed:'-'} | تشخیص: ${diagnosisVal || '-'} | شیفت: ${patient.shift || '-'} | پرستار: ${patient.nurse || '-'}
+
+داده‌های ارزیابی سیستم به سیستم ثبت‌شده در این شیفت:
+${dataSummary || 'داده‌ای ثبت نشده است.'}
+
+بر اساس این اطلاعات، گزارش پرستاری جامع، سیستم‌به‌سیستم و روایی این شیفت را بنویس.`;
+
+  let usedFallback = false;
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 12000);
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if(!response.ok){ throw new Error('پاسخ سرور نامعتبر بود (' + response.status + ')'); }
+    const data = await response.json();
+    const text = (data.content || []).map(b => b.text || '').join('\n').trim();
+    if(!text){ throw new Error('متنی از سرویس دریافت نشد.'); }
+    reportText = text;
+  }catch(err){
+    console.warn('AI generation unavailable, falling back to local template:', err);
+    usedFallback = true;
+    try{
+      reportText = buildLocalReport();
+    }catch(err2){
+      console.error('Local report generation error:', err2);
+      generationError = 'در تولید گزارش خطایی رخ داد. لطفاً اطلاعات مراحل قبل را بررسی و دوباره تلاش کنید.';
+    }
+  }finally{
+    isGenerating = false;
+    window.__usedFallback = usedFallback;
+    render();
+  }
+}
+
+/* ---------------------------------------------------------
+   خروجی PDF با تم بیمارستانی — شامل سربرگ لوگو، اطلاعات بیمار
+   و جای امضا/مهر پرستار
+--------------------------------------------------------- */
+function exportReportAsPDF(text, triggerBtn){
+  const p = state.patient || {};
+  const diagnosisVal = otherOrVal(p, 'diagnosis');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fa-IR');
+  const timeStr = now.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
+  const docNo = 'NR-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + Math.floor(Math.random()*900+100);
+
+  document.getElementById('pdfDate').textContent = dateStr + ' — ' + timeStr;
+  document.getElementById('pdfDocNo').textContent = docNo;
+  document.getElementById('pdfNurseName').textContent = p.nurse ? ('پرستار ثبت‌کننده: ' + p.nurse) : '.....................................';
+  document.getElementById('pdfReportText').textContent = text;
+
+  const metaItems = [
+    ['نام بیمار', p.name || '—'],
+    ['سن', p.age !== undefined ? faNum(p.age) + ' سال' : '—'],
+    ['شماره تخت', p.bed !== undefined ? faNum(p.bed) : '—'],
+    ['تشخیص پزشکی', diagnosisVal || '—'],
+    ['شیفت', p.shift || '—'],
+    ['پرستار ثبت‌کننده', p.nurse || '—'],
+  ];
+  document.getElementById('pdfMeta').innerHTML = metaItems.map(([k,v]) =>
+    `<div class="pdf-meta-item"><span>${k}</span><strong>${escapeHTML(String(v))}</strong></div>`
+  ).join('');
+
+  document.title = 'گزارش-پرستاری-' + (p.name ? p.name.replace(/\s+/g,'_') : 'بیمار');
+
+  const btnOldText = triggerBtn ? triggerBtn.textContent : null;
+  if(triggerBtn){ triggerBtn.textContent = 'در حال آماده‌سازی...'; triggerBtn.disabled = true; }
+
+  const resetBtn = () => { if(triggerBtn){ triggerBtn.textContent = btnOldText; triggerBtn.disabled = false; } };
+  window.addEventListener('afterprint', resetBtn, { once:true });
+
+  // از چاپ بومی مرورگر استفاده می‌کنیم (پایدارتر از canvas-capture)؛
+  // کاربر در پنجره چاپ گزینه‌ی «ذخیره به‌صورت PDF» را انتخاب می‌کند.
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      window.print();
+      // برای مرورگرهایی که رویداد afterprint را پشتیبانی نمی‌کنند
+      setTimeout(resetBtn, 2500);
+    }, 60);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
